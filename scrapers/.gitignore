@@ -1,0 +1,4 @@
+.env
+accounts.db
+*.out.jsonl
+.venv/*
