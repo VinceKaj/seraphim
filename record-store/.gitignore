@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+.pytest_cache/
+records.db
+records.db-wal
+records.db-shm
+*.cursor

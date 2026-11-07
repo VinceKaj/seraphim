@@ -1,0 +1,11 @@
+[project]
+name = "seraphim-record-store"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.162.2",
+    "pydantic>=2.14.3",
+    "pytest>=9.2.0",
+    "requests>=2.34.2",
+    "uvicorn>=0.54.0",
+]
