@@ -1,7 +1,7 @@
 import asyncio
-import json
 import os
 import random
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -9,7 +9,9 @@ from atproto import Client
 from dotenv import load_dotenv
 from post2schema import bluesky_post_to_schema
 
-OUTPUT = Path("bluesky_ukraine_posts.out.jsonl")
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "record-store"))
+import store_client as sc  # noqa: E402
+
 INTERVAL = 300  # 5 minutes
 MAX_SEEN = 10_000
 
@@ -32,8 +34,8 @@ def search(client: Client, query: str, limit: int = 50) -> list:
 
 def save(query_name: str, post) -> None:
     record = bluesky_post_to_schema(post, query_name=query_name)
-    with OUTPUT.open("a", encoding="utf-8") as f:
-        f.write(json.dumps(record, ensure_ascii=False) + "\n")
+    rkey = post.uri.split("/")[-1]
+    sc.create("post", f"bsky:{post.author.did}", rkey, record)
 
 
 async def poll_query(client: Client, name: str, query: str, seen: set, state: dict) -> None:
@@ -47,7 +49,11 @@ async def poll_query(client: Client, name: str, query: str, seen: set, state: di
 
             if not state["first_run"]:
                 for p in reversed(new):  # oldest first
-                    save(name, p)
+                    try:
+                        save(name, p)
+                    except Exception as e:
+                        print(f"[{name}] store write failed for {p.uri}: {e}")
+                        continue
                     print(f"[{name}] @{p.author.handle}: {p.record.text[:120]!r}")
 
             if len(seen) > MAX_SEEN:

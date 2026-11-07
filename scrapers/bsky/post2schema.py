@@ -14,21 +14,27 @@ def _post_url(post: PostView) -> str:
     return f"https://bsky.app/profile/{post.author.handle}/post/{rkey}"
 
 
+def _uri_to_key(uri: str) -> str:
+    # at://<did>/app.bsky.feed.post/<rkey> -> post|bsky:<did>|<rkey>
+    did, _, rkey = uri.removeprefix("at://").split("/", 2)
+    return f"post|bsky:{did}|{rkey}"
+
+
 def _links_from_record(record) -> list[Link]:
     links: list[Link] = []
 
     # Reply: point at the parent post
     if getattr(record, "reply", None) is not None:
         parent_uri = record.reply.parent.uri
-        links.append(Link(type="reply", target=f"bsky|{parent_uri}"))
+        links.append(Link(type="reply", target=_uri_to_key(parent_uri)))
 
     # Quote: an embed that references another post
     embed = getattr(record, "embed", None)
     if embed is not None and getattr(embed, "record", None) is not None:
         quoted = embed.record
         quoted_uri = getattr(quoted, "uri", None)
-        if quoted_uri:
-            links.append(Link(type="quote", target=f"bsky|{quoted_uri}"))
+        if quoted_uri and "/app.bsky.feed.post/" in quoted_uri:
+            links.append(Link(type="quote", target=_uri_to_key(quoted_uri)))
 
     # External URLs from link facets
     for facet in getattr(record, "facets", None) or []:

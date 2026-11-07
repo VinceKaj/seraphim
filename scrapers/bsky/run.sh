@@ -1,2 +1,2 @@
 #!/bin/bash
-../.venv/bin/python bsky-scrape.py
+cd "$(dirname "$0")" && exec uv run python bsky-scrape.py

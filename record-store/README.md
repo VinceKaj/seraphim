@@ -8,13 +8,14 @@ One shared, validated, append-only place for every scraper and agent on this VM 
 - Interactive API docs: http://127.0.0.1:8100/docs
 
 ```bash
-record-store-attach                    # attach to live logs (= ./attach.sh); detach with Ctrl-b d
+record-store-attach                    # live logs in tmux session "record-store" (= ./attach.sh); detach with Ctrl-b d
+journalctl -u record-store -f          # same logs without tmux
 systemctl status record-store          # state
 sudo systemctl restart record-store    # after editing store.py / schemas.py
 cd record-store && uv run pytest test_store.py -v
 ```
 
-systemd starts uvicorn inside a tmux session (socket `record-store`, session `record-store`), so the service still starts after a reboot and you can attach to it. Logs are in the tmux scrollback (50 000 lines), not in journald. Ctrl-c in the session stops the server; systemd restarts it after 5 s.
+systemd runs uvicorn directly, so it starts after a reboot and restarts after a crash. Logs go to journald. The tmux session `record-store` on the default socket only shows `journalctl -f`. `Ctrl-c` there stops the log view, not the server. `attach.sh` creates the session again if it is missing (for example after a reboot).
 
 ## Rules
 
