@@ -3,3 +3,5 @@
 __pycache__/
 .pytest_cache/
 *.cursor
+out_auto/
+out_demo/
