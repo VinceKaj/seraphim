@@ -1326,75 +1326,75 @@
   "by_side": [
    {
     "name": "osint",
-    "confirmed": 289,
-    "contradicted": 312,
-    "pending": 24,
-    "rate": 0.481
+    "confirmed": 51,
+    "contradicted": 9,
+    "pending": 320,
+    "rate": 0.85
    },
    {
     "name": "ru",
-    "confirmed": 1118,
-    "contradicted": 3466,
-    "pending": 151,
-    "rate": 0.244
+    "confirmed": 344,
+    "contradicted": 3272,
+    "pending": 3548,
+    "rate": 0.095
    },
    {
     "name": "ua",
-    "confirmed": 209,
-    "contradicted": 91,
-    "pending": 1,
-    "rate": 0.697
+    "confirmed": 50,
+    "contradicted": 33,
+    "pending": 94,
+    "rate": 0.602
    },
    {
     "name": "unknown",
-    "confirmed": 1011,
-    "contradicted": 1024,
-    "pending": 17,
-    "rate": 0.497
+    "confirmed": 222,
+    "contradicted": 670,
+    "pending": 679,
+    "rate": 0.249
    }
   ],
   "by_claim": [
    {
     "name": "ru_captured",
-    "confirmed": 789,
-    "contradicted": 2232,
-    "pending": 36,
-    "rate": 0.261
+    "confirmed": 280,
+    "contradicted": 1291,
+    "pending": 1953,
+    "rate": 0.178
    },
    {
     "name": "ru_entered",
-    "confirmed": 740,
-    "contradicted": 2367,
-    "pending": 136,
-    "rate": 0.238
+    "confirmed": 212,
+    "contradicted": 2622,
+    "pending": 2439,
+    "rate": 0.075
    },
    {
     "name": "ru_withdrew",
-    "confirmed": 29,
-    "contradicted": 7,
-    "pending": 0,
-    "rate": 0.806
+    "confirmed": 0,
+    "contradicted": 1,
+    "pending": 6,
+    "rate": 0.0
    },
    {
     "name": "ua_captured",
-    "confirmed": 647,
-    "contradicted": 78,
-    "pending": 6,
-    "rate": 0.892
+    "confirmed": 134,
+    "contradicted": 9,
+    "pending": 78,
+    "rate": 0.937
    },
    {
     "name": "ua_entered",
-    "confirmed": 403,
-    "contradicted": 189,
-    "pending": 13,
-    "rate": 0.681
+    "confirmed": 39,
+    "contradicted": 50,
+    "pending": 149,
+    "rate": 0.438
    },
    {
     "name": "ua_withdrew",
-    "confirmed": 19,
-    "contradicted": 20,
-    "pending": 2,
-    "rate": 0.487
+    "confirmed": 2,
+    "contradicted": 11,
+    "pending": 16,
+    "rate": 0.154
    }
   ],
   "mod_regex": {
