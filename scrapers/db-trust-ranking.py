@@ -25,11 +25,17 @@ EVENTS = {
 def load_records():
     """Yield validated Post and Article objects from the store."""
     for kind, model in (("post", Post), ("article", Article)):
-        for rec in sc.list_all(kind):
-            try:
-                yield model.model_validate(rec["data"])
-            except Exception as e:
-                print(f"skipped {kind} seq={rec.get('seq')}: {e}")
+        since = 0
+        while True:
+            batch = sc.tail(since=since, kind=kind, limit=1000)
+            if not batch:
+                break
+            for rec in batch:
+                try:
+                    yield model.model_validate(rec["data"])
+                except Exception as e:
+                    print(f"skipped {kind} seq={rec.get('seq')}: {e}")
+            since = batch[-1]["seq"]
 
 
 def build_observations(records) -> set[tuple[str, str]]:
