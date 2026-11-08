@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Seraphim: scale and validation</title>
+<style>
+  :root { --bg:#0f1115; --fg:#e8e8ea; --mute:#9aa0a8; --card:#181b21; --line:#2a2e36; --ru:#d32f2f; --ua:#1e6fd9; --ok:#3fb27f; --bad:#e0564f; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.45 system-ui,sans-serif; padding:24px 20px 60px; }
+  main { max-width:1100px; margin:0 auto; }
+  h1 { font-size:26px; margin:0 0 4px; } h2 { font-size:17px; margin:34px 0 10px; color:var(--mute); font-weight:600; letter-spacing:.02em; text-transform:uppercase; }
+  .sub { color:var(--mute); margin:0 0 20px; }
+  .tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; }
+  .tile { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 16px; }
+  .tile b { display:block; font-size:28px; font-variant-numeric:tabular-nums; }
+  .tile span { color:var(--mute); font-size:13px; }
+  .wrap { overflow-x:auto; } table { border-collapse:collapse; width:100%; font-variant-numeric:tabular-nums; }
+  th, td { text-align:left; padding:6px 10px; border-bottom:1px solid var(--line); white-space:nowrap; } th { color:var(--mute); font-weight:500; }
+  .bar { display:inline-block; height:8px; border-radius:4px; background:var(--ok); vertical-align:middle; margin-right:8px; }
+  .lo .bar { background:var(--bad); }
+  .pipe { display:flex; flex-wrap:wrap; gap:8px; align-items:center; } .pipe div { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:8px 12px; }
+  .pipe i { color:var(--mute); font-style:normal; }
+  a { color:#8fb8ff; }
+  .tabs { display:flex; gap:8px; margin:8px 0 6px; } .tabs a { padding:6px 14px; border:1px solid var(--line); border-radius:8px; text-decoration:none; color:var(--fg); background:var(--card); }
+  .tabs a.on { background:#b48cff; color:#111; border-color:#b48cff; font-weight:600; }
+  .h3 { font-size:14px; margin:18px 0 6px; color:var(--fg); font-weight:600; }
+  td.win { color:var(--ok); font-weight:600; } td.lose { color:var(--bad); }
+  .cols { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:16px; }
+  ul.sub li { margin:4px 0; }
+  :root { --pm:#3d8fe0; --sr:#bd7f20; }
+  .ex-card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; position:relative; }
+  .ex-q { font-size:19px; font-weight:650; } .ex-meta { color:var(--mute); margin:4px 0 10px; }
+  .ex-legend { display:flex; gap:18px; font-size:13px; color:var(--mute); } .ex-legend i { display:inline-block; width:14px; height:3px; border-radius:2px; vertical-align:middle; margin-right:6px; }
+  .ex-chart svg { width:100%; height:auto; display:block; } .ex-chart text { fill:var(--mute); font-size:11px; }
+  .ex-tip { position:absolute; pointer-events:none; background:#0b0c0f; border:1px solid var(--line); border-radius:8px; padding:6px 9px; font-size:12px; white-space:nowrap; }
+  .ex-tip b { font-variant-numeric:tabular-nums; } .res-no { color:var(--ok); font-weight:700; }
+</style>
+</head>
+<body><main>
+<h1>Seraphim</h1>
+<p class="sub">Open-source text → claims with exact evidence spans → credibility per claim and trust per source → P(Russian control) per settlement, checked against DeepState and Polymarket. <a href="/">Open the map →</a></p>
+<nav class="tabs"><a href="#overview" data-tab="overview">Overview</a><a href="#validation" data-tab="validation">Validation</a></nav>
+<section id="tab-validation" hidden>
+  <h2>Example: one market, day by day</h2>
+  <div class="ex-card">
+    <div class="ex-q" id="ex-q"></div>
+    <div class="ex-meta" id="ex-meta"></div>
+    <div class="ex-legend"><span><i style="background:var(--pm)"></i>Polymarket price</span><span><i style="background:var(--sr)"></i>Seraphim forecast</span></div>
+    <div class="ex-chart" id="ex-chart"></div>
+    <div class="ex-tip" id="ex-tip" hidden></div>
+    <p class="sub" id="ex-take"></p>
+  </div>
+  <h2>1 · Truth sources: DeepState vs ISW</h2>
+  <p class="sub" id="v-truth-sub"></p>
+  <div class="wrap"><table id="v-truth"></table></div>
+
+  <h2>2 · Forecast backtest (walk-forward, DeepState truth)</h2>
+  <p class="sub">Quarterly folds 2024-01 → 2026-11; each fold trains only on rows whose outcome was known before the fold starts (no leakage). Locked test = 2026-05 onward, never used for tuning. Base = constant base rate.</p>
+  <div class="wrap"><table id="v-bt"></table></div>
+
+  <h2>3 · Head-to-head vs Polymarket (resolved territorial markets)</h2>
+  <p class="sub" id="v-pm-sub"></p>
+  <div class="wrap"><table id="v-pm"></table></div>
+  <h3 class="h3">By market type</h3>
+  <div class="wrap"><table id="v-pmq"></table></div>
+  <h3 class="h3">Calibration: how often did “Yes” happen when the forecast was in this range?</h3>
+  <div class="wrap"><table id="v-cal"></table></div>
+
+  <h2>4 · Telegram claims vs DeepState (Apr–Nov 2026, LLM extractor v5)</h2>
+  <p class="sub">Checkable claims only (captured / entered / withdrew), excluding echoes (DeepState already showed it the day before). Confirmed = DeepState shows it on any day within 90 days after the claim; contradicted = it never does (claims ≥ 90 days old); younger unconfirmed claims are pending. DeepState often lags claims by weeks. DeepState is conservative, so “entered” claims about infiltration are often counted as contradicted.</p>
+  <div class="cols"><div class="wrap"><table id="v-side"></table></div><div class="wrap"><table id="v-claim"></table></div></div>
+  <p class="sub" id="v-mod"></p>
+
+  <h2>5 · Extraction tuning (same 151-post pilot, 100-post silver set)</h2>
+  <div class="wrap"><table id="v-ex"></table></div>
+
+  <h2>What this shows</h2>
+  <ul class="sub" id="v-take"></ul>
+</section>
+<section id="tab-overview">
+
+<h2>Scale</h2>
+<div class="tiles" id="scale"></div>
+
+<h2>Pipeline</h2>
+<div class="pipe">
+  <div>1.74M posts &amp; articles<br><i>Telegram · Bluesky · news</i></div>→
+  <div>Prefilter (no LLM)<br><i>7.6% name a front settlement</i></div>→
+  <div>LangGraph + Haiku 5.5<br><i>extract → validate span → retry</i></div>→
+  <div>Gazetteer<br><i>7,542 settlements, 107k names</i></div>→
+  <div>DeepState truth<br><i>1,679 daily polygons</i></div>→
+  <div>Trust · credibility · P(RU)</div>
+</div>
+
+<h2>Validation</h2>
+<div class="wrap"><table>
+<tr><th>What</th><th>Test</th><th>Result</th></tr>
+<tr><td>Extraction recall</td><td>100 MoD posts, regex silver labels</td><td>0.965</td></tr>
+<tr><td>Settlement resolution</td><td>151-post stratified pilot</td><td>97.6% of claims resolved</td></tr>
+<tr><td>Evidence</td><td>every claim's span is an exact substring of its post</td><td>100% (enforced)</td></tr>
+<tr><td>Extraction cost</td><td>9,407 posts, 30 days</td><td>$1.74 ($0.00019 / post)</td></tr>
+<tr><td>Forecast P(RU by +7/30/90 d)</td><td>walk-forward, quarterly folds 2024–2026</td><td>AUC 0.95–0.98</td></tr>
+<tr><td>vs Polymarket</td><td>337 resolved territorial markets, 18.6k market-days</td><td>better on 273 / 337 markets; Brier ≤90 d 0.076 vs market 0.073</td></tr>
+</table></div>
+
+<h2>Source trust (claims checked against DeepState)</h2>
+<p class="sub">Trust = (confirmed + 1) / (confirmed + contradicted + 2). A claim is confirmed if DeepState shows it within 90 days, contradicted if it does not (claims ≥ 90 days old); claims repeating what DeepState already showed are not counted. v0: no copy discount yet.</p>
+<div class="wrap"><table id="lead"><tr><th>Source</th><th>Trust</th><th>Confirmed</th><th>Contradicted</th><th>Claims</th></tr></table></div>
+</section>
+</main>
+<script>
+function showTab() {
+  const t = location.hash === "#validation" ? "validation" : "overview";
+  document.getElementById("tab-validation").hidden = t !== "validation";
+  document.getElementById("tab-overview").hidden = t !== "overview";
+  document.querySelectorAll(".tabs a").forEach(a => a.classList.toggle("on", a.dataset.tab === t));
+}
+window.addEventListener("hashchange", showTab); showTab();
+const P = x => x == null ? "—" : `${(x * 100).toFixed(1)}%`;
+const N = x => x == null ? "—" : x.toLocaleString("en");
+const tbl = (id, head, rows) => { document.getElementById(id).innerHTML = `<tr>${head.map(h => `<th>${h}</th>`).join("")}</tr>` + rows.map(r => `<tr>${r.map(c => typeof c === "object" && c ? `<td class="${c.cls}">${c.v}</td>` : `<td>${c}</td>`).join("")}</tr>`).join(""); };
+const duel = (a, b) => a < b ? [{ v: a.toFixed(4), cls: "win" }, { v: b.toFixed(4), cls: "" }] : [{ v: a.toFixed(4), cls: "" }, { v: b.toFixed(4), cls: "win" }];
+function drawExample(e) {
+  const S = e.series, W = 900, H = 300, L = 44, R = 120, T = 14, B = 30;
+  const t0 = Date.parse(S[0].day), t1 = Date.parse(e.deadline);
+  const x = d => L + (Date.parse(d) - t0) / (t1 - t0) * (W - L - R), y = p => T + (1 - p) * (H - T - B);
+  const path = k => S.map((r, i) => `${i ? "L" : "M"}${x(r.day).toFixed(1)},${y(r[k]).toFixed(1)}`).join("");
+  let g = "";
+  for (const p of [0, .25, .5, .75, 1]) g += `<line x1="${L}" x2="${W - R}" y1="${y(p)}" y2="${y(p)}" stroke="#2a2e36" stroke-width="1"/><text x="${L - 8}" y="${y(p) + 4}" text-anchor="end">${p * 100}%</text>`;
+  const months = [];
+  for (let d = new Date(S[0].day.slice(0, 8) + "01T00:00:00Z"); d <= new Date(e.deadline); d.setUTCMonth(d.getUTCMonth() + 1))
+    if (d >= new Date(S[0].day)) months.push(d.toISOString().slice(0, 10));
+  for (const m of months) g += `<text x="${x(m)}" y="${H - 10}" text-anchor="middle">${new Date(m).toLocaleDateString("en", { month: "short", year: "2-digit", timeZone: "UTC" })}</text>`;
+  const last = S.at(-1), peak = S.reduce((a, r) => r.market > a.market ? r : a);
+  g += `<line x1="${x(e.deadline)}" x2="${x(e.deadline)}" y1="${T}" y2="${H - B}" stroke="#9aa0a8" stroke-dasharray="3 3"/>
+    <text x="${x(e.deadline) + 6}" y="${T + 10}" style="fill:var(--fg);font-weight:600">Deadline</text>
+    <text x="${x(e.deadline) + 6}" y="${T + 25}" style="fill:var(--ok);font-weight:700">Resolved ${e.resolved.toUpperCase()}</text>
+    <path d="${path("market")}" fill="none" stroke="var(--pm)" stroke-width="2"/>
+    <path d="${path("ours")}" fill="none" stroke="var(--sr)" stroke-width="2"/>
+    <circle cx="${x(peak.day)}" cy="${y(peak.market)}" r="4" fill="var(--pm)" stroke="var(--card)" stroke-width="2"/>
+    <text x="${x(peak.day) + 8}" y="${y(peak.market) - 6}" style="fill:var(--fg)">Polymarket peak ${Math.round(peak.market * 100)}%</text>
+    <text x="${x(last.day) + 8}" y="${y(last.market) - 4}" style="fill:var(--fg)">Polymarket</text>
+    <text x="${x(last.day) + 8}" y="${y(last.ours) + 14}" style="fill:var(--fg)">Seraphim</text>
+    <line id="ex-x" x1="0" x2="0" y1="${T}" y2="${H - B}" stroke="#9aa0a8" stroke-width="1" visibility="hidden"/>
+    <rect id="ex-hit" x="${L}" y="${T}" width="${W - L - R}" height="${H - T - B}" fill="transparent"/>`;
+  const box = document.getElementById("ex-chart");
+  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Polymarket price vs Seraphim forecast">${g}</svg>`;
+  const svg = box.querySelector("svg"), hit = svg.querySelector("#ex-hit"), cx = svg.querySelector("#ex-x"), tip = document.getElementById("ex-tip");
+  hit.addEventListener("mousemove", ev => {
+    const pt = svg.createSVGPoint(); pt.x = ev.clientX; pt.y = ev.clientY;
+    const sp = pt.matrixTransform(svg.getScreenCTM().inverse());
+    const r = S.reduce((a, q) => Math.abs(x(q.day) - sp.x) < Math.abs(x(a.day) - sp.x) ? q : a);
+    cx.setAttribute("x1", x(r.day)); cx.setAttribute("x2", x(r.day)); cx.setAttribute("visibility", "visible");
+    tip.hidden = false;
+    tip.innerHTML = `${r.day}<br><span style="color:var(--pm)">■</span> Polymarket <b>${Math.round(r.market * 100)}%</b><br><span style="color:var(--sr)">■</span> Seraphim <b>${(r.ours * 100).toFixed(1)}%</b>` + (r.dist != null ? `<br>front line ${Math.abs(r.dist)} km from town centre` : "");
+    const cr = document.querySelector(".ex-card").getBoundingClientRect();
+    tip.style.left = Math.min(ev.clientX - cr.left + 12, cr.width - 210) + "px"; tip.style.top = (ev.clientY - cr.top + 12) + "px";
+  });
+  hit.addEventListener("mouseleave", () => { tip.hidden = true; cx.setAttribute("visibility", "hidden"); });
+  document.getElementById("ex-q").textContent = `“${e.question.replace("?", "")}, ${e.deadline.slice(0, 4)}?”`;
+  document.getElementById("ex-meta").innerHTML = `Polymarket · $${Math.round(e.volume / 1000)}k traded · rule: ${e.rule} · resolves on ${e.source} · <span class="res-no">resolved ${e.resolved}</span>`;
+  const above = S.filter(r => r.market >= 0.5).length, maxOurs = Math.max(...S.map(r => r.ours));
+  document.getElementById("ex-take").innerHTML = `For <b>${above} days</b> the market priced Russia taking Kostyantynivka as more likely than not (peak ${Math.round(peak.market * 100)}%). Seraphim never went above ${Math.ceil(maxOurs * 100)}%: the front line was ${Math.abs(S[0].dist)} km from the town centre when trading opened and still ${Math.abs(last.dist)} km at the deadline, and towns that far from the line almost never fall within weeks. The town is still Ukrainian today (${Math.abs(e.dist_now)} km on ${e.as_of}). Error over the life of the market: <b>Seraphim ${e.brier_ours}</b> vs Polymarket ${e.brier_market} (lower is better). Every Seraphim value is walk-forward: the model only used data from before that day.`;
+}
+fetch("/validation.json").then(r => r.json()).then(v => {
+  if (v.example) drawExample(v.example);
+  const t = v.truth, m = t.matrix;
+  document.getElementById("v-truth-sub").textContent = `${N(t.days)} days where both maps exist, settlements within 20 km of the line (${N(t.settlement_days)} settlement-days). Exact 3-state agreement ${P(t.exact_agree)}; Russian-vs-not agreement ${P(t.ru_vs_not_agree)}. When DeepState says Russian, ISW disagrees ${P(t.ds_ru_isw_not)} of the time; when ISW says Russian, DeepState disagrees only ${P(t.isw_ru_ds_not)}: ISW is the more conservative map, and Polymarket resolves on ISW.`;
+  tbl("v-truth", ["DeepState ↓ / ISW →", ...t.labels], t.labels.map((l, i) => [l, ...m[i].map(N)]));
+  const rows = [];
+  for (const h of ["7", "30", "90"]) for (const [k, lab] of [["all_folds", "all folds"], ["locked_2026-05+", "locked 2026-05+"]]) {
+    const r = v.backtest[h][k]; if (!r) continue;
+    rows.push([`+${h} d`, lab, N(r.geo.n), N(r.geo.pos), r.base.brier.toFixed(5), r.geo.brier.toFixed(5), r["geo+text"].brier.toFixed(5), r.geo.auc, r["geo+text"].auc]);
+  }
+  tbl("v-bt", ["Horizon", "Test set", "Rows", "Flips", "Brier base", "Brier geo", "Brier geo+text", "AUC geo", "AUC geo+text"], rows);
+  const d = v.pm_deepstate, i = v.pm_isw;
+  document.getElementById("v-pm-sub").innerHTML = `${N(d.markets)} resolved markets, ${N(d.market_days)} market-days. Each day we compare Polymarket's closing price with our walk-forward P for that market. Number of markets where Seraphim beats Polymarket: <b>${d.better}/${d.markets}</b>. Error = Brier score, the average squared gap between the forecast and what happened (0 = perfect, lower is better). Pooled over all days the market's error is lower (${d.brier_market} vs our ${d.brier_ours}): we are right more often, but when we miss, we miss harder. Green = better.`;
+  tbl("v-pm", ["Days to deadline", "Market-days", "Markets", "Error Seraphim (DeepState-trained)", "Error Polymarket", "Error Seraphim (ISW-trained)", "Days Seraphim closer"],
+    d.buckets.map((b, k) => { const [o, mk] = duel(b.brier_ours, b.brier_market); const ib = i.buckets[k]; return [b.bucket, N(b.n), b.markets, o, mk, ib ? ib.brier_ours.toFixed(4) : "—", P(b.days_ours_closer)]; }));
+  tbl("v-pmq", ["Market type", "Market-days", "Markets", "Error Seraphim", "Error Polymarket"],
+    Object.entries(d.by_qualifier).map(([q, r]) => [{ any: "“enter X” (any part, infiltration counts)", capture: "“capture X”", all: "“all of X”" }[q], N(r.n), r.markets, ...duel(r.brier_ours, r.brier_market)]));
+  tbl("v-cal", ["Forecast range", "Seraphim: n", "Seraphim: Yes rate", "Polymarket: n", "Polymarket: Yes rate"], d.calibration.map(c => [c.bin, N(c.ours.n), P(c.ours.rate), N(c.market.n), P(c.market.rate)]));
+  const cl = v.claims;
+  tbl("v-side", ["Source side", "Confirmed", "Contradicted", "Pending", "Confirm rate"], cl.by_side.map(r => [r.name, N(r.confirmed), N(r.contradicted), N(r.pending), P(r.rate)]));
+  tbl("v-claim", ["Claim type", "Confirmed", "Contradicted", "Pending", "Confirm rate"], cl.by_claim.map(r => [r.name.replace("_", " "), N(r.confirmed), N(r.contradicted), N(r.pending), P(r.rate)]));
+  const mr = cl.mod_regex;
+  document.getElementById("v-mod").textContent = `Russian MoD “liberated X” claims since 2022 (regex baseline): ${N(mr.claims)} claims; ${N(mr.confirmed)} confirmed later by DeepState, ${N(mr.contradicted)} not confirmed within 30 days, ${N(mr.echo)} echoes (DeepState already showed it). Median lead over DeepState when confirmed: ${mr.lead_days_median} days.`;
+  tbl("v-ex", ["Prompt", "Claims", "Resolved to settlement", "Silver recall", "Defect found → fix"], v.extraction.map(e => [e.version, e.claims, P(e.resolved), e.silver == null ? "—" : e.silver.toFixed(3), e.fix]));
+  const b30 = d.buckets.find(b => b.bucket.startsWith("31"));
+  document.getElementById("v-take").innerHTML = [
+    `Geometry alone ranks which settlements fall next very well (AUC ≈ 0.97); text features do not yet add to it.`,
+    `Seraphim beats Polymarket on ${d.better}/${d.markets} markets and at 31–90 days (error ${b30.brier_ours} vs ${b30.brier_market}); the market wins at ≤30 days and pooled, because it reacts to ISW infiltration updates our geometry model cannot see.`,
+    `ISW is more conservative than DeepState; training on ISW labels does not close the gap (ISW maps missing for 2026-06 → 11).`,
+    `Ukrainian-side channels' checkable claims are confirmed ${P(cl.by_side.find(r => r.name === "ua")?.rate)} of the time, Russian-side ${P(cl.by_side.find(r => r.name === "ru")?.rate)}; that gap is the propaganda signal the trust layer learns.`,
+    `Next: feed per-claim credibility into the forecast to catch infiltrations before the map moves.`].map(x => `<li>${x}</li>`).join("");
+});
+fetch("/stats.json").then(r => r.json()).then(s => {
+  const f = n => n.toLocaleString("en");
+  const tiles = [[f(s.records), "records in the store"], [f(s.by_kind.post || 0), "posts"], [f(s.by_kind.article || 0), "articles"],
+    [f(s.sources), "distinct sources"], [f(s.claims_v5), "geo-resolved claims (30 d)"], [f(s.settlements), "settlements tracked daily"],
+    [f(s.truth_days), "days of DeepState truth"]];
+  document.getElementById("scale").innerHTML = tiles.map(([b, t]) => `<div class="tile"><b>${b}</b><span>${t}</span></div>`).join("");
+  const t = document.getElementById("lead");
+  const name = x => x.replace(/^telegram:/, "t.me/").replace(/^bsky:did:plc:(.{6}).*/, "bsky:$1…");
+  const rows = s.source_trust.filter(r => r.confirmed + r.contradicted >= 10);
+  for (const r of rows) {
+    const tr = document.createElement("tr"); if (r.trust < 0.4) tr.className = "lo";
+    tr.innerHTML = `<td>${name(r.source)}</td><td><span class="bar" style="width:${Math.round(r.trust * 80)}px"></span>${r.trust.toFixed(2)}</td><td>${r.confirmed}</td><td>${r.contradicted}</td><td>${r.claims}</td>`;
+    t.appendChild(tr);
+  }
+});
+</script>
+</body></html>

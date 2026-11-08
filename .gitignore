@@ -3,3 +3,9 @@
 __pycache__/
 .pytest_cache/
 *.cursor
+logs/
+trust/data/
+trust/trust.db
+.env
+**/.env
+*.session

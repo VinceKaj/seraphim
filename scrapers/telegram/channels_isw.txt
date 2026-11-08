@@ -1,0 +1,31 @@
+# Channels cited most in ISW Oct–Nov 2026 reports + front-line mappers. Format: username[:lang]
+# --- UA official / mappers
+GeneralStaffZSU:uk
+DeepStateUA:uk
+AFUStratCom:uk
+VadymFilashkin:uk
+dnipropetrovskaODA:uk
+Koord_shtab:uk
+ssternenko:uk
+exilenova_plus:ru
+# --- RU MoD groups / official
+mod_russia:ru
+grvZapad:ru
+tass_agency:ru
+# --- RU milbloggers
+wargonzo:ru
+rybar:ru
+dva_majors:ru
+DnevnikDesantnika:ru
+divgen:ru
+creamy_caprice:ru
+muchnoyjugend88:ru
+motopatriot78:ru
+voin_dv:ru
+severnnyi:ru
+btr80:ru
+voenkorKotenok:ru
+sashakots:ru
+zvizdecmanhustu:ru
+# --- mapping / OSINT
+AMK_Mapping:en

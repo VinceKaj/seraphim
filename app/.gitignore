@@ -1,0 +1,7 @@
+# symlinks to Kacper's copies (see README) and Vite cache
+node_modules
+.vite-cache/
+public/data/frontline
+public/data/ukraine.pmtiles
+dist/
+public/assets/

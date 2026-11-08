@@ -42,6 +42,17 @@ CREATE TABLE IF NOT EXISTS sources(
 """
 
 
+def dumps(obj) -> str:
+    """JSON with real UTF-8 (Cyrillic, emoji readable in SQLite/Datasette).
+    Falls back to \\u escapes if the text has lone surrogates, which UTF-8 cannot encode."""
+    s = json.dumps(obj, ensure_ascii=False)
+    try:
+        s.encode("utf-8")
+    except UnicodeEncodeError:
+        s = json.dumps(obj)
+    return s
+
+
 def rid(key: str) -> str:
     return hashlib.sha256(key.encode()).hexdigest()[:16]
 
@@ -105,7 +116,7 @@ def create_record(rec: RecordIn):
             cur = c.execute(
                 "INSERT OR IGNORE INTO records(id,key,kind,source,source_id,created_at,data) "
                 "VALUES(?,?,?,?,?,?,?)",
-                (id_, key, rec.kind, rec.source, rec.source_id, time.time(), json.dumps(data)))
+                (id_, key, rec.kind, rec.source, rec.source_id, time.time(), dumps(data)))
             new = cur.rowcount == 1
             if new:
                 seq = cur.lastrowid
@@ -180,7 +191,7 @@ def put_source(author: str, data: dict[str, Any] = Body(...)):
     with db() as c:
         c.execute("INSERT INTO sources(author,data,updated_at) VALUES(?,?,?) "
                   "ON CONFLICT(author) DO UPDATE SET data=excluded.data, updated_at=excluded.updated_at",
-                  (author, json.dumps(data), now))
+                  (author, dumps(data), now))
     return {"author": author, "data": data, "updated_at": now}
 
 

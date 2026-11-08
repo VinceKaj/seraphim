@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Seraphim</title>
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <div id="map-wrap">
+    <div id="map"></div>
+    <div id="datebar" role="toolbar" aria-label="Date"></div>
+    <div id="timeslider" role="region" aria-label="Time slider" hidden></div>
+  </div>
+  <aside id="feed">
+    <header>
+      <h1>Seraphim: claims, credibility, P(RU control)</h1>
+      <div class="hdr-btns">
+        <button id="timeslider-toggle" title="Animate territorial changes over time" disabled>Time slider</button>
+        <button id="theme-toggle" title="Toggle basemap">◐</button>
+      </div>
+    </header>
+    <details id="layers" open>
+      <summary>Layers</summary>
+      <div id="overlays"></div>
+      <div id="front-controls"></div>
+      <div id="h3-controls"></div>
+    </details>
+    <details id="legend">
+      <summary>Legend</summary>
+      <div class="legend-grid">
+        <div><h2>Side (colour)</h2><ul id="legend-sides"></ul>
+          <h2>Ring (trust-factor)</h2><ul id="legend-trust"></ul>
+          <p class="legend-note">Thicker ring = more trustworthy.</p></div>
+        <div><h2>Type (symbol)</h2><ul id="legend-types"></ul></div>
+      </div>
+    </details>
+    <div id="feed-count"></div>
+    <ul id="feed-list"></ul>
+  </aside>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
