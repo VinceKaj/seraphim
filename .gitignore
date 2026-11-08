@@ -9,3 +9,5 @@ trust/trust.db
 .env
 **/.env
 *.session
+out_auto/
+out_demo/
