@@ -20,10 +20,20 @@ MAX_SEEN = 10_000
 
 QUERIES = {
     "war_general": '"Russia Ukraine" OR "Ukraine war"',
-    "frontline":   "Bakhmut OR Avdiivka OR Kharkiv OR Zaporizhzhia OR Donetsk",
-    "kyiv":        "(Kyiv OR Kiev) (missile OR drone OR strike)",
-    "moscow":      "(Kremlin OR Putin) Ukraine",
-    "ceasefire":   "(ceasefire OR \"peace talks\" OR negotiations) Ukraine",
+    "bakhmut":   "Bakhmut",
+    "avdiivka": "Avdiivka",
+    "kharkiv":   "Kharkiv",
+    "zaporizhzhia_npp": '"Zaporizhzhia nuclear plant"',
+    "donetsk":   "Donetsk",
+    "kyiv":        "Kyiv OR Kiev",
+    "moscow":      "Kremlin OR Putin Ukraine",
+    "ceasefire":   "Ukraine ceasefire peace talks",
+    "kremlin_statement":'"Kremlin spokesperson"',
+    "zelensky":         '"Zelensky"',
+    "putin_name":       '"Putin"',
+    "lavrov_name":      '"Lavrov"',
+    "peskov_name":      '"Peskov"',
+    "trump_ukraine":    '"Trump" Ukraine',
 }
 
 

@@ -2,3 +2,5 @@
 accounts.db
 *.out.jsonl
 .venv/*
+src.csv
+fetch_cache.jsonl
