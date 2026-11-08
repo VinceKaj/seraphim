@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Seraphim: Russia-Ukraine War Timeline</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+  html, body { margin: 0; height: 100%; font-family: system-ui, -apple-system, sans-serif; color: #ccc }
+  #map { position: absolute; inset: 0; }
+  .leaflet-top { top: 56px; }
+  #map .leaflet-tile-pane {
+    opacity: 0.55;
+    filter: brightness(0.7) contrast(1.1);
+  }
+#map { background: #0b0f14; }
+  header {
+    position: absolute; top: 0; left: 0; right: 0; z-index: 500;
+    display: flex; align-items: center; gap: 12px; padding: 10px 16px;
+    background: #111111; box-shadow: 0 1px 4px rgba(0,0,0,.25);
+  }
+  header h1 { font-size: 16px; margin: 0; flex: 1; }
+  #panel {
+    position: absolute; bottom: 0; left: 0; right: 0; z-index: 500;
+    padding: 8px 16px 10px; background: #111111;
+    box-shadow: 0 -1px 4px rgba(0,0,0,.25);
+  }
+  #now { font-size: 14px; margin-bottom: 4px; }
+  #scrub { width: 100%; margin: 0; }
+  #strip { display: flex; gap: 10px; overflow-x: auto; padding: 8px 2px 4px; }
+  .card {
+    flex: 0 0 220px; padding: 8px 10px; background: #111111;
+    border: 1px solid #333; border-left: 5px solid var(--c); border-radius: 6px;
+    cursor: pointer; transition: opacity .2s;
+  }
+  .card:hover { box-shadow: 0 2px 6px rgba(0,0,0,.2); }
+  .card.active { outline: 2px solid #222; }
+  .card.future { opacity: .35; }
+  .card small { color: #555; font-size: 12px; }
+  .card strong { display: block; font-size: 13px; line-height: 1.3; margin-top: 2px; }
+  #info {
+    display: none; position: absolute; top: 64px; right: 12px; z-index: 600;
+    width: 320px; max-height: 55vh; overflow: auto; padding: 14px 16px;
+    background: #111111; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,.3);
+  }
+  #info.open { display: block; }
+  #info h2 { font-size: 17px; margin: 0 0 6px; }
+  #info .meta { font-size: 12px; color: #555; margin-bottom: 8px; }
+  #info p { font-size: 14px; line-height: 1.45; }
+  #close { float: right; border: 0; background: none; font-size: 18px; cursor: pointer; }
+  @media (max-width: 600px) { #info { left: 8px; right: 8px; width: auto; top: 64px; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Seraphim: Russia-Ukraine War Timeline</h1>
+  <label>Category
+    <select id="cat">
+      <option value="">All</option>
+      <option>military</option><option>diplomatic</option><option>humanitarian</option>
+      <option>political</option><option>energy</option><option>other</option>
+    </select>
+  </label>
+</header>
+
+<div id="map"></div>
+<div id="info"></div>
+
+<div id="panel">
+  <div id="now"></div>
+  <input id="scrub" type="range" min="0" max="0" value="0" step="1" aria-label="Scroll timeline">
+  <div id="strip"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const COLORS = {
+  military: "#c0392b", diplomatic: "#2471a3", humanitarian: "#1e8449",
+  political: "#8e44ad", energy: "#d68910", other: "#566573"
+};
+const $ = s => document.querySelector(s);
+const el = (tag, text, cls) => {
+  const n = document.createElement(tag);
+  if (text != null) n.textContent = text;
+  if (cls) n.className = cls;
+  return n;
+};
+
+const map = L.map("map", { zoomControl: false }).setView([50, 30], 4);
+L.control.zoom({ position: "topleft" }).addTo(map);
+L.tileLayer("https://services.arcgisonline.com/arcgis/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", {
+  maxZoom: 18, attribution: "&copy; OpenStreetMap contributors"
+}).addTo(map);
+
+let events = [];
+const markers = new Map();
+let selectedId = null;
+
+async function load() {
+  const cat = $("#cat").value;
+  const res = await fetch("/api/events" + (cat ? `?category=${encodeURIComponent(cat)}` : ""));
+  if (!res.ok) { $("#now").textContent = "Could not load events."; return; }
+  const scrub = $("#scrub");
+  const atEnd = Number(scrub.value) >= Number(scrub.max);
+  events = await res.json();
+  scrub.max = Math.max(events.length - 1, 0);
+  if (atEnd) scrub.value = scrub.max;   // stay at "now" as new events arrive
+  render();
+}
+
+function render() {
+  markers.forEach(m => m.remove());
+  markers.clear();
+  events.forEach(e => {
+    const m = L.circleMarker([e.lat, e.lng], {
+      radius: 8, color: "#fff", weight: 2,
+      fillColor: COLORS[e.category] || COLORS.other, fillOpacity: 0.9
+    }).bindTooltip(`${e.date} — ${e.title}`);
+    m.on("click", () => select(e.id));
+    markers.set(e.id, m);
+  });
+
+  $("#strip").replaceChildren(...events.map(e => {
+    const card = el("div", null, "card");
+    card.dataset.id = e.id;
+    card.style.setProperty("--c", COLORS[e.category] || COLORS.other);
+    card.append(el("small", e.date), el("strong", e.title));
+    card.onclick = () => select(e.id);
+    return card;
+  }));
+
+  if (selectedId && markers.has(selectedId)) {
+    markers.get(selectedId).setStyle({ radius: 12, weight: 3 });
+    document.querySelector(`.card[data-id="${selectedId}"]`)?.classList.add("active");
+  }
+  updateVisible();
+}
+
+// Events up to the scrubber position are shown on the map; later ones are dimmed.
+function updateVisible() {
+  const cursor = Number($("#scrub").value);
+  events.forEach((e, i) => {
+    const m = markers.get(e.id);
+    if (i <= cursor) m.addTo(map); else m.remove();
+    document.querySelector(`.card[data-id="${e.id}"]`)?.classList.toggle("future", i > cursor);
+  });
+  const cur = events[cursor];
+  $("#now").textContent = cur
+    ? `Showing up to ${cur.date} — ${cur.title}`
+    : "No events yet. Add some with POST /api/events.";
+}
+
+function select(id) {
+  const idx = events.findIndex(e => e.id === id);
+  if (idx < 0) return;
+  const e = events[idx];
+  const scrub = $("#scrub");
+  if (idx > Number(scrub.value)) { scrub.value = idx; updateVisible(); }
+
+  selectedId = id;
+  markers.forEach((m, k) => m.setStyle(k === id ? { radius: 12, weight: 3 } : { radius: 8, weight: 2 }));
+  document.querySelectorAll(".card").forEach(c => c.classList.toggle("active", c.dataset.id === id));
+  document.querySelector(`.card[data-id="${id}"]`)?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  map.flyTo([e.lat, e.lng], Math.max(map.getZoom(), 5), { duration: 0.8 });
+  showInfo(e);
+}
+
+function showInfo(e) {
+  const box = $("#info");
+  box.replaceChildren();
+  const close = el("button", "✕");
+  close.id = "close";
+  close.onclick = () => box.classList.remove("open");
+  box.append(close, el("h2", e.title), el("div", `${e.date} · ${e.category}`, "meta"));
+  if (e.summary) box.append(el("p", e.summary));
+  if (e.source_url) {
+    const a = el("a", "Source");
+    a.href = e.source_url;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    box.append(a);
+  }
+  box.classList.add("open");
+}
+
+$("#cat").addEventListener("change", load);
+$("#scrub").addEventListener("input", () => {
+  updateVisible();
+  const cur = events[Number($("#scrub").value)];
+  if (cur) document.querySelector(`.card[data-id="${cur.id}"]`)?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+});
+
+// Mouse wheel scrolls the timeline strip horizontally.
+const strip = $("#strip");
+strip.addEventListener("wheel", e => {
+  if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+    strip.scrollLeft += e.deltaY;
+    e.preventDefault();
+  }
+}, { passive: false });
+
+load();
+setInterval(load, 10000);  // pick up events added while the page is open
+</script>
+</body>
+</html>

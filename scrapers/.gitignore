@@ -4,3 +4,4 @@ accounts.db
 .venv/*
 src.csv
 fetch_cache.jsonl
+sitemap.xml
