@@ -155,7 +155,7 @@ def main():
              "claims_v5": len(rows), "claims_total": len(rows),
              "claims_checked": sum(c + x for c, x, _ in src_rec.values()),
              "events_30d": len(feats), "events_since": cutoff, "settlements": len(P.gids), "truth_days": D, "as_of": as_of,
-             "source_trust": [{"source": s, "confirmed": c, "contradicted": x, "claims": n,
+             "source_trust": [{"source": s, "side": side.get(s) or "unknown", "confirmed": c, "contradicted": x, "claims": n,
                                "trust": round((c + 1) / (c + x + 2), 2)} for c, x, n, s in lead]}
     (OUT / "stats.json").write_text(json.dumps(stats, indent=1))
     print(json.dumps({k: v for k, v in stats.items() if k != "source_trust"}))

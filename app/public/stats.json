@@ -19,301 +19,344 @@
    "confirmed": 8,
    "contradicted": 0,
    "claims": 30,
-   "trust": 0.9
+   "trust": 0.9,
+   "side": "ua"
   },
   {
    "source": "telegram:muchnoyjugend88",
    "confirmed": 6,
    "contradicted": 0,
    "claims": 215,
-   "trust": 0.88
+   "trust": 0.88,
+   "side": "ru"
   },
   {
    "source": "telegram:exilenova_plus",
    "confirmed": 6,
    "contradicted": 0,
    "claims": 18,
-   "trust": 0.88
+   "trust": 0.88,
+   "side": "unknown"
   },
   {
    "source": "telegram:operativnoZSU",
    "confirmed": 5,
    "contradicted": 0,
    "claims": 45,
-   "trust": 0.86
+   "trust": 0.86,
+   "side": "ua"
   },
   {
    "source": "telegram:AMK_Mapping",
    "confirmed": 51,
    "contradicted": 9,
    "claims": 953,
-   "trust": 0.84
+   "trust": 0.84,
+   "side": "osint"
   },
   {
    "source": "telegram:DeepStateUA",
    "confirmed": 19,
    "contradicted": 6,
    "claims": 319,
-   "trust": 0.74
+   "trust": 0.74,
+   "side": "ua"
   },
   {
    "source": "bsky:did:plc:3fblwf3cqm26ffysek3x3zbe",
    "confirmed": 4,
    "contradicted": 1,
    "claims": 16,
-   "trust": 0.71
+   "trust": 0.71,
+   "side": "unknown"
   },
   {
    "source": "bsky:did:plc:ekyxwshmyato6wqgw35qmz2o",
    "confirmed": 5,
    "contradicted": 3,
    "claims": 19,
-   "trust": 0.6
+   "trust": 0.6,
+   "side": "unknown"
   },
   {
    "source": "bsky:did:plc:6y3honhec2jch2ryrbuyx5a5",
    "confirmed": 3,
    "contradicted": 2,
    "claims": 28,
-   "trust": 0.57
+   "trust": 0.57,
+   "side": "unknown"
   },
   {
    "source": "bsky:did:plc:exkwti3p75fr75vko3typ65c",
    "confirmed": 3,
    "contradicted": 2,
    "claims": 10,
-   "trust": 0.57
+   "trust": 0.57,
+   "side": "unknown"
   },
   {
    "source": "bsky:did:plc:slpncy5zfofi54v5nhecroz7",
    "confirmed": 5,
    "contradicted": 4,
    "claims": 61,
-   "trust": 0.55
+   "trust": 0.55,
+   "side": "unknown"
   },
   {
    "source": "telegram:AussieCossack",
    "confirmed": 2,
    "contradicted": 3,
    "claims": 30,
-   "trust": 0.43
+   "trust": 0.43,
+   "side": "ru"
   },
   {
    "source": "telegram:Ateobreaking",
    "confirmed": 6,
    "contradicted": 9,
    "claims": 44,
-   "trust": 0.41
+   "trust": 0.41,
+   "side": "unknown"
   },
   {
    "source": "telegram:ButusovPlus",
    "confirmed": 12,
    "contradicted": 19,
    "claims": 199,
-   "trust": 0.39
+   "trust": 0.39,
+   "side": "ua"
   },
   {
    "source": "bsky:did:plc:aloklffeww5txb5n6xc47o2k",
    "confirmed": 2,
    "contradicted": 4,
    "claims": 8,
-   "trust": 0.38
+   "trust": 0.38,
+   "side": "unknown"
   },
   {
    "source": "bsky:did:plc:aypj52uzua2p3lyg6ypfw27a",
    "confirmed": 2,
    "contradicted": 4,
    "claims": 7,
-   "trust": 0.38
+   "trust": 0.38,
+   "side": "unknown"
   },
   {
    "source": "bsky:did:plc:sx6ikfmnlbplv4q67lwp6cgc",
    "confirmed": 4,
    "contradicted": 9,
    "claims": 63,
-   "trust": 0.33
+   "trust": 0.33,
+   "side": "unknown"
   },
   {
    "source": "bsky:did:plc:dxfky4ctcrnwt556ihjw37ds",
    "confirmed": 14,
    "contradicted": 34,
    "claims": 80,
-   "trust": 0.3
+   "trust": 0.3,
+   "side": "unknown"
   },
   {
    "source": "bsky:did:plc:kztn3wd3n45j3l4yr6dz6isl",
    "confirmed": 1,
    "contradicted": 4,
    "claims": 53,
-   "trust": 0.29
+   "trust": 0.29,
+   "side": "unknown"
   },
   {
    "source": "bsky:did:plc:43fdk46qa5gsokzygzildsaq",
    "confirmed": 5,
    "contradicted": 14,
    "claims": 69,
-   "trust": 0.29
+   "trust": 0.29,
+   "side": "unknown"
   },
   {
    "source": "bsky:did:plc:atlkjg42q45quxehr5m7hcmc",
    "confirmed": 3,
    "contradicted": 9,
    "claims": 26,
-   "trust": 0.29
+   "trust": 0.29,
+   "side": "unknown"
   },
   {
    "source": "bsky:did:plc:cdnhjrw5y723gdpxc5oopimq",
    "confirmed": 2,
    "contradicted": 8,
    "claims": 38,
-   "trust": 0.25
+   "trust": 0.25,
+   "side": "unknown"
   },
   {
    "source": "bsky:did:plc:c5mn25aupflk4dondgtgqvpw",
    "confirmed": 1,
    "contradicted": 5,
    "claims": 35,
-   "trust": 0.25
+   "trust": 0.25,
+   "side": "unknown"
   },
   {
    "source": "bsky:did:plc:q45a5lkzb7ssg37ouvqravvb",
    "confirmed": 1,
    "contradicted": 7,
    "claims": 9,
-   "trust": 0.2
+   "trust": 0.2,
+   "side": "unknown"
   },
   {
    "source": "telegram:CITeam",
    "confirmed": 11,
    "contradicted": 53,
    "claims": 252,
-   "trust": 0.18
+   "trust": 0.18,
+   "side": "unknown"
   },
   {
    "source": "telegram:masnoschannel",
    "confirmed": 68,
    "contradicted": 329,
    "claims": 1616,
-   "trust": 0.17
+   "trust": 0.17,
+   "side": "unknown"
   },
   {
    "source": "telegram:mod_russia",
    "confirmed": 97,
    "contradicted": 469,
    "claims": 1077,
-   "trust": 0.17
+   "trust": 0.17,
+   "side": "ru"
   },
   {
    "source": "bsky:did:plc:ogpzk3l77iv46gat55ghgs5r",
    "confirmed": 2,
    "contradicted": 14,
    "claims": 41,
-   "trust": 0.17
+   "trust": 0.17,
+   "side": "unknown"
   },
   {
    "source": "bsky:did:plc:d2ulgqqa7urcwq6hzx3w73h3",
    "confirmed": 6,
    "contradicted": 38,
    "claims": 677,
-   "trust": 0.15
+   "trust": 0.15,
+   "side": "unknown"
   },
   {
    "source": "bsky:did:plc:7hcwimkr7xnbiygmalchv7vw",
    "confirmed": 0,
    "contradicted": 5,
    "claims": 26,
-   "trust": 0.14
+   "trust": 0.14,
+   "side": "unknown"
   },
   {
    "source": "telegram:Army_Russia",
    "confirmed": 0,
    "contradicted": 5,
    "claims": 11,
-   "trust": 0.14
+   "trust": 0.14,
+   "side": "ru"
   },
   {
    "source": "bsky:did:plc:frhnh7m6gkjdz2iec5j6zhm2",
    "confirmed": 4,
    "contradicted": 32,
    "claims": 146,
-   "trust": 0.13
+   "trust": 0.13,
+   "side": "unknown"
   },
   {
    "source": "bsky:did:plc:dy4mk6ej5d7hlqgfeqjft3hd",
    "confirmed": 0,
    "contradicted": 7,
    "claims": 29,
-   "trust": 0.11
+   "trust": 0.11,
+   "side": "unknown"
   },
   {
    "source": "telegram:BILD_Russian",
    "confirmed": 0,
    "contradicted": 7,
    "claims": 22,
-   "trust": 0.11
+   "trust": 0.11,
+   "side": "unknown"
   },
   {
    "source": "telegram:rybar",
    "confirmed": 106,
    "contradicted": 1184,
    "claims": 3122,
-   "trust": 0.08
+   "trust": 0.08,
+   "side": "ru"
   },
   {
    "source": "telegram:vysokygovorit",
    "confirmed": 1,
    "contradicted": 22,
    "claims": 51,
-   "trust": 0.08
+   "trust": 0.08,
+   "side": "ru"
   },
   {
    "source": "telegram:sashakots",
    "confirmed": 15,
    "contradicted": 192,
    "claims": 573,
-   "trust": 0.08
+   "trust": 0.08,
+   "side": "ru"
   },
   {
    "source": "telegram:wargonzo",
    "confirmed": 84,
    "contradicted": 1034,
    "claims": 3878,
-   "trust": 0.08
+   "trust": 0.08,
+   "side": "ru"
   },
   {
    "source": "telegram:voenacher",
    "confirmed": 1,
    "contradicted": 25,
    "claims": 65,
-   "trust": 0.07
+   "trust": 0.07,
+   "side": "ru"
   },
   {
    "source": "telegram:epoddubny",
    "confirmed": 11,
    "contradicted": 159,
    "claims": 416,
-   "trust": 0.07
+   "trust": 0.07,
+   "side": "ru"
   },
   {
    "source": "telegram:yurasumy",
    "confirmed": 4,
    "contradicted": 69,
    "claims": 151,
-   "trust": 0.07
+   "trust": 0.07,
+   "side": "ru"
   },
   {
    "source": "telegram:dva_majors",
    "confirmed": 4,
    "contradicted": 77,
    "claims": 368,
-   "trust": 0.06
+   "trust": 0.06,
+   "side": "ru"
   },
   {
    "source": "telegram:rsotmdivision",
    "confirmed": 0,
    "contradicted": 19,
    "claims": 82,
-   "trust": 0.05
+   "trust": 0.05,
+   "side": "ru"
   }
  ]
 }

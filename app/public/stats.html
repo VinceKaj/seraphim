@@ -116,7 +116,11 @@
 
 <h2>Source trust (claims checked against DeepState)</h2>
 <p class="sub">Trust = (confirmed + 1) / (confirmed + contradicted + 2). A claim is confirmed if DeepState shows it within 90 days, contradicted if it does not (claims ≥ 90 days old); claims repeating what DeepState already showed are not counted. v0: no copy discount yet.</p>
-<div class="wrap"><table id="lead"><tr><th>Source</th><th>Trust</th><th>Confirmed</th><th>Contradicted</th><th>Claims</th></tr></table></div>
+<div class="cols">
+  <div><h3 class="h3">Most trusted 20</h3><div class="wrap"><table id="lead-top"></table></div></div>
+  <div><h3 class="h3">Least trusted 20</h3><div class="wrap"><table id="lead-bot"></table></div></div>
+</div>
+<p class="sub" id="lead-note"></p>
 </section>
 </main>
 <script>
@@ -254,17 +258,18 @@ fetch("/validation.json").then(r => r.json()).then(v => {
 fetch("/stats.json").then(r => r.json()).then(s => {
   const f = n => n.toLocaleString("en");
   const tiles = [[f(s.records), "records in the store"], [f(s.by_kind.post || 0), "posts"], [f(s.by_kind.article || 0), "articles"],
-    [f(s.sources), "distinct sources"], [f(s.claims_v5), "geo-resolved claims (30 d)"], [f(s.settlements), "settlements tracked daily"],
+    [f(s.sources), "distinct sources"], [f(s.claims_v5), "geo-resolved claims"], [f(s.settlements), "settlements tracked daily"],
     [f(s.truth_days), "days of DeepState truth"]];
   document.getElementById("scale").innerHTML = tiles.map(([b, t]) => `<div class="tile"><b>${b}</b><span>${t}</span></div>`).join("");
-  const t = document.getElementById("lead");
   const name = x => x.replace(/^telegram:/, "t.me/").replace(/^bsky:did:plc:(.{6}).*/, "bsky:$1…");
-  const rows = s.source_trust.filter(r => r.confirmed + r.contradicted >= 10);
-  for (const r of rows) {
-    const tr = document.createElement("tr"); if (r.trust < 0.4) tr.className = "lo";
-    tr.innerHTML = `<td>${name(r.source)}</td><td><span class="bar" style="width:${Math.round(r.trust * 80)}px"></span>${r.trust.toFixed(2)}</td><td>${r.confirmed}</td><td>${r.contradicted}</td><td>${r.claims}</td>`;
-    t.appendChild(tr);
-  }
+  const SIDE = { ru: "Russian side", ua: "Ukrainian side", osint: "OSINT", media: "media", unknown: "unknown" };
+  const all = s.source_trust.filter(r => r.confirmed + r.contradicted >= 5).sort((a, b) => b.trust - a.trust);
+  const k = Math.min(20, Math.floor(all.length / 2));
+  const head = `<tr><th>Source</th><th>Side</th><th>Trust</th><th>Confirmed</th><th>Contradicted</th><th>Claims</th></tr>`;
+  const row = r => `<tr class="${r.trust < 0.4 ? "lo" : ""}"><td>${name(r.source)}</td><td>${SIDE[r.side] ?? r.side ?? "—"}</td><td><span class="bar" style="width:${Math.round(r.trust * 60)}px"></span>${r.trust.toFixed(2)}</td><td>${r.confirmed}</td><td>${r.contradicted}</td><td>${r.claims}</td></tr>`;
+  document.getElementById("lead-top").innerHTML = head + all.slice(0, k).map(row).join("");
+  document.getElementById("lead-bot").innerHTML = head + all.slice(-k).reverse().map(row).join("");
+  document.getElementById("lead-note").textContent = `${all.length} sources have at least 5 claims checked against DeepState. Confirmed / Contradicted = checkable claims (captured, entered, withdrew) settled within 90 days; Claims = everything the source posted, including “repelled” and “holds”, which DeepState cannot check.`;
 });
 </script>
 </body></html>
