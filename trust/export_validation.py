@@ -12,6 +12,12 @@ from pathlib import Path
 
 import numpy as np
 
+
+def load(path):
+    """np.load on .npz re-reads (and decompresses) an array on every access; load each array once."""
+    z = np.load(path)
+    return {k: z[k] for k in z.files}
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from geo import DATA, TRUST_DB  # noqa: E402
 
@@ -19,8 +25,8 @@ OUT = Path(__file__).resolve().parents[1] / "app" / "public" / "validation.json"
 
 
 def truth_agreement():
-    T = np.load(DATA / "truth.npz")
-    I = np.load(DATA / "isw_truth.npz")
+    T = load(DATA / "truth.npz")
+    I = load(DATA / "isw_truth.npz")
     dcol = {str(d)[:10]: i for i, d in enumerate(T["dates"])}
     gcol = {int(g): j for j, g in enumerate(T["gids"])}
     ij = np.array([gcol.get(int(g), -1) for g in I["gids"]])
@@ -91,7 +97,7 @@ def pm(path):
 
 def claims():
     db = sqlite3.connect(TRUST_DB)
-    T = np.load(DATA / "truth.npz")
+    T = load(DATA / "truth.npz")
     col = {int(g): j for j, g in enumerate(T["gids"])}
     last = T["state"][-1]
     D = len(T["dates"])
@@ -137,7 +143,7 @@ def example(question="Will Russia capture Kostyantynivka by March 31?"):
              if r["question"] == question)
     rs = sorted((r for r in json.load(open(DATA / "pm_compare_geo.json")) if r["cid"] == q["condition_id"]),
                 key=lambda r: r["day"])
-    T = np.load(DATA / "truth.npz")
+    T = load(DATA / "truth.npz")
     db = sqlite3.connect(TRUST_DB)
     g = db.execute("SELECT gid FROM settlement WHERE name = ? ORDER BY pop DESC LIMIT 1", (rs[0]["name"],)).fetchone()[0]
     j = {int(x): k for k, x in enumerate(T["gids"])}[g]
@@ -151,8 +157,41 @@ def example(question="Will Russia capture Kostyantynivka by March 31?"):
                 dist_now=round(float(T["dist"][-1, j]), 1), as_of=str(T["dates"][-1])[:10])
 
 
+def market_curves(path=DATA / "pm_compare_geo.json"):
+    """Per-market daily series (for the picker) + mean P by days-to-deadline, split by resolution."""
+    import csv
+    rows = json.load(open(path))
+    meta = {r["condition_id"]: r for r in csv.DictReader(open(Path(__file__).resolve().parent / "research" / "pm_territorial.csv"))}
+    by = collections.defaultdict(list)
+    for r in rows:
+        by[r["cid"]].append(r)
+    markets = []
+    for cid, rs in by.items():
+        rs.sort(key=lambda r: r["day"])
+        m = meta.get(cid, {})
+        y = rs[0]["y"]
+        bo = float(np.mean([(r["ours"] - y) ** 2 for r in rs])); bm = float(np.mean([(r["market"] - y) ** 2 for r in rs]))
+        markets.append(dict(question=m.get("question", rs[0]["name"]), deadline=m.get("deadline", ""), q=rs[0]["q"],
+                            resolved="Yes" if y else "No", volume=round(float(m.get("volume") or 0)),
+                            brier_ours=round(bo, 4), brier_market=round(bm, 4),
+                            series=[dict(day=r["day"], market=round(r["market"], 3), ours=round(r["ours"], 4)) for r in rs]))
+    markets.sort(key=lambda m: -m["volume"])
+    bins = [(0, 7), (8, 14), (15, 30), (31, 60), (61, 90), (91, 120), (121, 180)]
+    curves = {}
+    for yv, name in ((1, "yes"), (0, "no")):
+        out = []
+        for a, b in bins:
+            rs = [r for r in rows if r["y"] == yv and a <= r["h"] <= b]
+            if rs:
+                out.append(dict(h0=a, h1=b, n=len(rs), markets=len({r["cid"] for r in rs}),
+                                ours=round(float(np.mean([r["ours"] for r in rs])), 3),
+                                market=round(float(np.mean([r["market"] for r in rs])), 3)))
+        curves[name] = out
+    return dict(markets=markets, curves=curves)
+
+
 def main():
-    v = dict(example=example(), truth=truth_agreement(), backtest=backtest(), pm_deepstate=pm(DATA / "pm_compare_geo.json"),
+    v = dict(example=example(), market_curves=market_curves(), truth=truth_agreement(), backtest=backtest(), pm_deepstate=pm(DATA / "pm_compare_geo.json"),
              pm_isw=pm(DATA / "pm_compare_geo_isw.json"), claims=claims(), extraction=EXTRACTION)
     OUT.write_text(json.dumps(v, ensure_ascii=False, indent=1))
     print(json.dumps({k: v[k] for k in ("truth",)}, indent=1))

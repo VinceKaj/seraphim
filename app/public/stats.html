@@ -32,7 +32,11 @@
   .ex-legend { display:flex; gap:18px; font-size:13px; color:var(--mute); } .ex-legend i { display:inline-block; width:14px; height:3px; border-radius:2px; vertical-align:middle; margin-right:6px; }
   .ex-chart svg { width:100%; height:auto; display:block; } .ex-chart text { fill:var(--mute); font-size:11px; }
   .ex-tip { position:absolute; pointer-events:none; background:#0b0c0f; border:1px solid var(--line); border-radius:8px; padding:6px 9px; font-size:12px; white-space:nowrap; }
-  .ex-tip b { font-variant-numeric:tabular-nums; } .res-no { color:var(--ok); font-weight:700; }
+  .ex-tip b { font-variant-numeric:tabular-nums; }
+  .pick { margin:0 0 10px; } .pick select { background:var(--card); color:var(--fg); border:1px solid var(--line); border-radius:6px; padding:5px 8px; max-width:100%; font-size:13px; }
+  .curves { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:14px; }
+  .cv { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px 14px; position:relative; }
+  .cv h4 { margin:0 0 6px; font-size:14px; } .cv svg { width:100%; height:auto; display:block; } .cv text { fill:var(--mute); font-size:11px; } .res-no { color:var(--ok); font-weight:700; }
 </style>
 </head>
 <body><main>
@@ -40,7 +44,8 @@
 <p class="sub">Open-source text → claims with exact evidence spans → credibility per claim and trust per source → P(Russian control) per settlement, checked against DeepState and Polymarket. <a href="/">Open the map →</a></p>
 <nav class="tabs"><a href="#overview" data-tab="overview">Overview</a><a href="#validation" data-tab="validation">Validation</a></nav>
 <section id="tab-validation" hidden>
-  <h2>Example: one market, day by day</h2>
+  <h2>Any settled market, day by day</h2>
+  <div class="pick"><label for="ex-pick">Market</label> <select id="ex-pick"></select></div>
   <div class="ex-card">
     <div class="ex-q" id="ex-q"></div>
     <div class="ex-meta" id="ex-meta"></div>
@@ -49,6 +54,13 @@
     <div class="ex-tip" id="ex-tip" hidden></div>
     <p class="sub" id="ex-take"></p>
   </div>
+
+  <h2>All settled markets: average forecast vs days to deadline</h2>
+  <p class="sub">Each point = mean over all market-days in that bin (walk-forward Seraphim forecast vs Polymarket's daily close).
+  A perfect forecaster sits on the dashed line: 100% for markets that resolved Yes, 0% for markets that resolved No.
+  Markets that resolve Yes usually stop trading when the event happens, so the last bins on the left chart hold only a few markets (hover a point for counts).</p>
+  <div class="curves"><div class="cv" id="cv-yes"></div><div class="cv" id="cv-no"></div></div>
+  <p class="sub" id="cv-take"></p>
   <h2>1 · Truth sources: DeepState vs ISW</h2>
   <p class="sub" id="v-truth-sub"></p>
   <div class="wrap"><table id="v-truth"></table></div>
@@ -132,12 +144,12 @@ function drawExample(e) {
   for (const m of months) g += `<text x="${x(m)}" y="${H - 10}" text-anchor="middle">${new Date(m).toLocaleDateString("en", { month: "short", year: "2-digit", timeZone: "UTC" })}</text>`;
   const last = S.at(-1), peak = S.reduce((a, r) => r.market > a.market ? r : a);
   g += `<line x1="${x(e.deadline)}" x2="${x(e.deadline)}" y1="${T}" y2="${H - B}" stroke="#9aa0a8" stroke-dasharray="3 3"/>
-    <text x="${x(e.deadline) + 6}" y="${T + 10}" style="fill:var(--fg);font-weight:600">Deadline</text>
-    <text x="${x(e.deadline) + 6}" y="${T + 25}" style="fill:var(--ok);font-weight:700">Resolved ${e.resolved.toUpperCase()}</text>
+    <text x="${x(e.deadline) + 6}" y="${T + 40}" style="fill:var(--fg);font-weight:600">Deadline</text>
+    <text x="${x(e.deadline) + 6}" y="${T + 55}" style="fill:${e.resolved === "Yes" ? "var(--bad)" : "var(--ok)"};font-weight:700">Resolved ${e.resolved.toUpperCase()}</text>
     <path d="${path("market")}" fill="none" stroke="var(--pm)" stroke-width="2"/>
     <path d="${path("ours")}" fill="none" stroke="var(--sr)" stroke-width="2"/>
     <circle cx="${x(peak.day)}" cy="${y(peak.market)}" r="4" fill="var(--pm)" stroke="var(--card)" stroke-width="2"/>
-    <text x="${x(peak.day) + 8}" y="${y(peak.market) - 6}" style="fill:var(--fg)">Polymarket peak ${Math.round(peak.market * 100)}%</text>
+    <text x="${x(peak.day) + (x(peak.day) > W - R - 160 ? -8 : 8)}" y="${y(peak.market) - 6}" text-anchor="${x(peak.day) > W - R - 160 ? "end" : "start"}" style="fill:var(--fg)">Polymarket peak ${Math.round(peak.market * 100)}%</text>
     <text x="${x(last.day) + 8}" y="${y(last.market) - 4}" style="fill:var(--fg)">Polymarket</text>
     <text x="${x(last.day) + 8}" y="${y(last.ours) + 14}" style="fill:var(--fg)">Seraphim</text>
     <line id="ex-x" x1="0" x2="0" y1="${T}" y2="${H - B}" stroke="#9aa0a8" stroke-width="1" visibility="hidden"/>
@@ -156,12 +168,58 @@ function drawExample(e) {
     tip.style.left = Math.min(ev.clientX - cr.left + 12, cr.width - 210) + "px"; tip.style.top = (ev.clientY - cr.top + 12) + "px";
   });
   hit.addEventListener("mouseleave", () => { tip.hidden = true; cx.setAttribute("visibility", "hidden"); });
-  document.getElementById("ex-q").textContent = `“${e.question.replace("?", "")}, ${e.deadline.slice(0, 4)}?”`;
+  document.getElementById("ex-q").textContent = /20\d\d/.test(e.question) ? `“${e.question}”` : `“${e.question.replace("?", "")}, ${e.deadline.slice(0, 4)}?”`;
   document.getElementById("ex-meta").innerHTML = `Polymarket · $${Math.round(e.volume / 1000)}k traded · rule: ${e.rule} · resolves on ${e.source} · <span class="res-no">resolved ${e.resolved}</span>`;
   const above = S.filter(r => r.market >= 0.5).length, maxOurs = Math.max(...S.map(r => r.ours));
+  if (S[0].dist == null) {
+    const win = e.brier_ours < e.brier_market;
+    document.getElementById("ex-take").innerHTML = `Resolved <b>${e.resolved}</b>. Error over the life of the market (Brier, lower is better): Seraphim <b>${e.brier_ours}</b> vs Polymarket <b>${e.brier_market}</b>, so <b>${win ? "Seraphim" : "Polymarket"}</b> was closer. Every Seraphim value is walk-forward: the model only used data from before that day.`;
+    return;
+  }
   document.getElementById("ex-take").innerHTML = `For <b>${above} days</b> the market priced Russia taking Kostyantynivka as more likely than not (peak ${Math.round(peak.market * 100)}%). Seraphim never went above ${Math.ceil(maxOurs * 100)}%: the front line was ${Math.abs(S[0].dist)} km from the town centre when trading opened and still ${Math.abs(last.dist)} km at the deadline, and towns that far from the line almost never fall within weeks. The town is still Ukrainian today (${Math.abs(e.dist_now)} km on ${e.as_of}). Error over the life of the market: <b>Seraphim ${e.brier_ours}</b> vs Polymarket ${e.brier_market} (lower is better). Every Seraphim value is walk-forward: the model only used data from before that day.`;
 }
+function drawCurves(c) {
+  const draw = (id, rows, target, title) => {
+    const W = 460, H = 250, L = 40, R = 16, T = 14, B = 34, X0 = 180, X1 = 0;
+    const mid = r => (r.h0 + r.h1) / 2;
+    const x = h => L + (X0 - h) / (X0 - X1) * (W - L - R), y = p => T + (1 - p) * (H - T - B);
+    const path = k => rows.map((r, i) => `${i ? "L" : "M"}${x(mid(r)).toFixed(1)},${y(r[k]).toFixed(1)}`).join("");
+    let g = "";
+    for (const p of [0, .25, .5, .75, 1]) g += `<line x1="${L}" x2="${W - R}" y1="${y(p)}" y2="${y(p)}" stroke="#2a2e36"/><text x="${L - 6}" y="${y(p) + 4}" text-anchor="end">${p * 100}%</text>`;
+    for (const h of [180, 120, 90, 60, 30, 0]) g += `<text x="${x(h)}" y="${H - 16}" text-anchor="middle">${h}</text>`;
+    g += `<text x="${(L + W - R) / 2}" y="${H - 2}" text-anchor="middle">days to deadline →</text>`;
+    g += `<line x1="${L}" x2="${W - R}" y1="${y(target)}" y2="${y(target)}" stroke="#9aa0a8" stroke-dasharray="4 4"/><text x="${L + 4}" y="${y(target) + (target ? 13 : -5)}">perfect</text>`;
+    g += `<path d="${path("market")}" fill="none" stroke="var(--pm)" stroke-width="2"/><path d="${path("ours")}" fill="none" stroke="var(--sr)" stroke-width="2"/>`;
+    for (const r of rows) for (const k of ["market", "ours"])
+      g += `<circle cx="${x(mid(r))}" cy="${y(r[k])}" r="4" fill="var(--${k === "market" ? "pm" : "sr"})" stroke="var(--card)" stroke-width="2"><title>${r.h0}–${r.h1} days before deadline · ${k === "market" ? "Polymarket" : "Seraphim"} ${Math.round(r[k] * 100)}% · ${r.markets} markets, ${r.n} market-days</title></circle>`;
+    const first = rows.at(-1);   // largest horizon = left end, where the two lines are far apart
+    g += `<text x="${x(mid(first)) + 6}" y="${y(first.market) + (first.market > first.ours ? -9 : 16)}" style="fill:var(--fg)">Polymarket</text>`;
+    g += `<text x="${x(mid(first)) + 6}" y="${y(first.ours) + (first.ours >= first.market || first.ours < 0.1 ? -9 : 16)}" style="fill:var(--fg)">Seraphim</text>`;
+    const nm = Math.max(...rows.map(r => r.markets));
+    document.getElementById(id).innerHTML = `<h4>${title} <span style="color:var(--mute);font-weight:400">(up to ${nm} markets)</span></h4><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${title}">${g}</svg>`;
+  };
+  const yes = [...c.yes].sort((a, b) => a.h0 - b.h0), no = [...c.no].sort((a, b) => a.h0 - b.h0);
+  draw("cv-yes", yes, 1, "Resolved YES (it happened)");
+  draw("cv-no", no, 0, "Resolved NO (it did not happen)");
+  const n30 = no.find(r => r.h0 === 15), y30 = yes.find(r => r.h0 === 15);
+  document.getElementById("cv-take").innerHTML = `<b>Where we win:</b> when nothing happens, Seraphim says so early — about ${Math.round(n30.ours * 100)}% at 15–30 days while Polymarket still prices ${Math.round(n30.market * 100)}%; the market only converges in the final week. Most markets resolve No, so this is why Seraphim beats Polymarket on most markets.
+    <b>Where we lose:</b> when it does happen, Polymarket sees it coming (${Math.round(y30.market * 100)}% at 15–30 days) and Seraphim mostly does not (${Math.round(y30.ours * 100)}%). These are mostly infiltration / “any part of the town” resolutions on ISW maps, which front-line geometry does not see. This is the gap the text claims are meant to close.`;
+}
+function setupPicker(v) {
+  const sel = document.getElementById("ex-pick"), ms = v.market_curves?.markets ?? [];
+  const ex = v.example;
+  const opts = [`<option value="ex">${ex.question} — resolved ${ex.resolved} (featured)</option>`]
+    .concat(ms.map((m, i) => `<option value="${i}">${m.question} — resolved ${m.resolved} · ${m.brier_ours < m.brier_market ? "Seraphim" : "Polymarket"} closer · $${Math.round(m.volume / 1000)}k</option>`));
+  sel.innerHTML = opts.join("");
+  sel.addEventListener("change", () => {
+    if (sel.value === "ex") { drawExample(ex); return; }
+    const m = ms[+sel.value];
+    drawExample({ ...m, rule: "", source: "ISW map > DeepState > consensus", dist_now: null, as_of: "" });
+    document.getElementById("ex-meta").innerHTML = `Polymarket · $${Math.round(m.volume / 1000)}k traded · market type: ${({ any: "enter (any part)", capture: "capture", all: "capture all of" })[m.q] ?? m.q} · <span class="res-no" style="color:${m.resolved === "Yes" ? "var(--bad)" : "var(--ok)"}">resolved ${m.resolved}</span>`;
+  });
+}
 fetch("/validation.json").then(r => r.json()).then(v => {
+  if (v.market_curves) { drawCurves(v.market_curves.curves); setupPicker(v); }
   if (v.example) drawExample(v.example);
   const t = v.truth, m = t.matrix;
   document.getElementById("v-truth-sub").textContent = `${N(t.days)} days where both maps exist, settlements within 20 km of the line (${N(t.settlement_days)} settlement-days). Exact 3-state agreement ${P(t.exact_agree)}; Russian-vs-not agreement ${P(t.ru_vs_not_agree)}. When DeepState says Russian, ISW disagrees ${P(t.ds_ru_isw_not)} of the time; when ISW says Russian, DeepState disagrees only ${P(t.isw_ru_ds_not)}: ISW is the more conservative map, and Polymarket resolves on ISW.`;
