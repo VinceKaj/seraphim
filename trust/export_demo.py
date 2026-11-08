@@ -11,6 +11,7 @@ Usage: uv run trust/export_demo.py
 """
 import collections
 import json
+import os
 import sqlite3
 import sys
 from datetime import date, datetime, timedelta, timezone
@@ -79,7 +80,8 @@ def main():
         q = ",".join("?" * len(ids[i:i + 900]))
         for rid, u in rec.execute(f"SELECT id, json_extract(data,'$.url') FROM records WHERE id IN ({q})", ids[i:i + 900]):
             urls[rid] = u
-    cutoff = str(date.fromisoformat(as_of) - timedelta(days=30))
+    # map events: claims of the last EVENTS_DAYS days (default 2026-04-01 onward = the extracted range)
+    cutoff = str(date.fromisoformat(as_of) - timedelta(days=int(os.environ.get("EVENTS_DAYS", 221))))
     feats, src_rec = [], collections.defaultdict(lambda: [0, 0, 0])
     for rid, n, src, pa, g, name, s, mod, attr, span, lm in rows:
         day = pa[:10]
@@ -106,6 +108,7 @@ def main():
         nm, lat, lon = st[g]
         verb = s[3:].replace("_", " ")
         who = {"ru": "Russia", "ua": "Ukraine"}[actor]
+        span = span if len(span) <= 300 else span[:297] + "…"   # keep events.geojson small
         desc = (f"“{span}”\n\n{src.split(':', 1)[1]} ({own or 'unknown side'}) · {mod}"
                 + (f" · attributed to {attr}" if attr else "") + (f" · landmark: {lm}" if lm else "")
                 + f"\n\nDeepState check: {out} · corroborated by {len(srcs)} source(s)"
@@ -117,7 +120,7 @@ def main():
                                      "source": urls.get(rid) or "", "description": desc}})
     feats.sort(key=lambda f: f["properties"]["time"], reverse=True)
     OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / "events.geojson").write_text(json.dumps({"type": "FeatureCollection", "features": feats}, ensure_ascii=False))
+    (OUT / "events.geojson").write_text(json.dumps({"type": "FeatureCollection", "features": feats}, ensure_ascii=False, separators=(",", ":")))
     (OUT / "groups.json").write_text("[]\n")
     print(f"{len(feats)} events, outcomes:", collections.Counter(
         "confirmed" if f["properties"]["trust"] == 0.9 else "contradicted" if f["properties"]["trust"] == 0.15

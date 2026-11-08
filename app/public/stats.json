@@ -1,15 +1,15 @@
 {
- "records": 1776206,
+ "records": 1782777,
  "by_kind": {
   "article": 8678,
-  "post": 1767528
+  "post": 1774099
  },
- "sources": 72542,
+ "sources": 73163,
  "claims_v5": 29756,
  "claims_total": 29756,
  "claims_checked": 4651,
- "events_30d": 6583,
- "events_since": "2026-10-08",
+ "events_30d": 29613,
+ "events_since": "2026-03-31",
  "settlements": 7542,
  "truth_days": 1679,
  "as_of": "2026-11-07",
